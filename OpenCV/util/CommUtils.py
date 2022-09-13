@@ -31,3 +31,47 @@ def do_correction_image(image, face_center, eye_centers):
     correction_centers = np.squeeze(correction_centers, axis=0)
 
     return correction_image, correction_centers
+
+
+def doDetectObject(face, center):
+    w, h = face[2:4]
+    center = np.array(center)
+
+    face_avg_rate = np.multiply((w, h), (0.45, 0.65))
+
+    lib_avg_rate = np.multiply((w, h), (0.18, 0.1))
+
+    # 얼굴 중심에서 머리 시작좌표로 이동
+    pt1 = center - face_avg_rate
+
+    # 얼굴 중심에서 머리 종료좌표로 이동
+    pt2 = center + face_avg_rate
+
+    # 얼굴 전체 영역
+    face_all = roi(pt1, pt2 - pt1)
+
+    size = np.multiply(face_all[2:4], (1, 0.35))
+
+    # 윗머리 영역
+    face_up = roi(pt1, size)
+
+    # 귀밑머리 영역
+    face_down = roi(pt2 - size, size)
+
+    # 입술 중심 좌표(얼굴 중심의 약 30% 아래 위치함)
+    lip_center = center + (0, h * 0.3)
+
+    # 입술 중심에서 입술 시작좌표로 이동
+    lip1 = lip_center - lib_avg_rate
+
+    # 입술 중심에서 입술 끝좌표로 이동
+    lip2 = lip_center + lib_avg_rate
+
+    # 입술 영역
+    lip = roi(lip1, lip2 - lip1)
+
+    return [face_up, face_down, lip, face_all]
+
+
+def roi(pt, size):
+    return np.ravel([pt, size]).astype(int)
