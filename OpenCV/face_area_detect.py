@@ -50,8 +50,20 @@ if faces.any():
 
             subs = [correction_image[y: y + h, x: x + w] for x, y, w, h in rois]
 
-        for i, sub in enumerate(subs):
-            cv2.imshow('sub' + str(i), sub)
+            hists = [cv2.calcHist([sub], [0, 1, 2], mask, (128, 128, 128), (0, 256, 0, 256, 0, 256)) for sub, mask in
+                     zip(subs, masks)]
+            hists = [h / np.sum(h) for h in hists]
+
+            sim1 = cv2.compareHist(hists[3], hists[2], cv2.HISTCMP_CORREL)
+            sim2 = cv2.compareHist(hists[0], hists[1], cv2.HISTCMP_CORREL)
+
+            criteria = 0.2 if sim1 > 0.2 else 0.1
+
+            value = sim2 > criteria
+
+            text = "Woman" if value else "Man"
+            cv2.putText(image, text, (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            cv2.imshow("MyFace", image)
 
     else:
         print("cannot find eyes")
